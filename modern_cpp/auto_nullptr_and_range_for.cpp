@@ -129,12 +129,24 @@ void printType(T&& value) {
 }
 
 // Auto return type (C++14)
-auto calculateSum(const std::vector<int>& vec) -> decltype(vec[0]) {
+auto calculateSum(const std::vector<int>& vec) -> int // decltype(vec[0])
+{
     auto sum = 0; // int
     for (const auto& element : vec) {
         sum += element;
     }
-    return sum;
+    return sum;  // warning: reference to local variable ‘sum’ returned
+}
+
+// Alternative version showing decltype usage correctly
+auto calculateAverage(const std::vector<double>& vec) -> std::remove_reference_t<decltype(vec[0])> {
+    if (vec.empty()) return 0.0;
+
+    auto sum = 0.0;
+    for (const auto& element : vec) {
+        sum += element;
+    }
+    return sum / vec.size(); // Returns double (same as vec[0] type)
 }
 
 // ========================================
@@ -214,10 +226,10 @@ void demonstrateRangeFor() {
 // Custom class that works with range-based for
 class NumberRange {
 private:
-    int start, end;
+    int m_start, m_end;
 
 public:
-    NumberRange(int s, int e) : start(s), end(e) {}
+    NumberRange(int s, int e) : m_start(s), m_end(e) {}
 
     // Iterator class
     class Iterator {
@@ -233,8 +245,8 @@ public:
         }
     };
 
-    Iterator begin() const { return Iterator(start); }
-    Iterator end() const { return Iterator(end); }
+    [[nodiscard]] Iterator begin() const { return {m_start}; }
+    [[nodiscard]] Iterator end() const { return {m_end}; }
 };
 
 // ========================================
@@ -374,7 +386,7 @@ int main() {
     auto foundIt = findElement(dataSet, 5);
     if (foundIt != dataSet.end()) {
         std::cout << "Found element 5 at position: "
-                  << std::distance(dataSet.begin(), foundIt) << std::endl;
+                  << std::distance(dataSet.cbegin(), foundIt) << std::endl;  // Both are const_iterator now
     }
 
     std::cout << "\n=== DEMONSTRATION COMPLETE ===" << std::endl;
