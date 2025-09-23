@@ -161,16 +161,6 @@ auto getFirstElement(Container& container) -> decltype(container[0]) {
     throw std::runtime_error("Container is empty");
 }
 
-// Perfect forwarding with decltype
-template<typename T>
-void perfectForward(T&& arg) {
-    using ArgType = decltype(arg);
-    std::cout << "Perfect forwarding: " << getTypeName<ArgType>() << std::endl;
-
-    // Forward to another function
-    processArgument(std::forward<T>(arg));
-}
-
 void processArgument(int& x) {
     std::cout << "Processing lvalue reference: " << x << std::endl;
     ++x;
@@ -182,6 +172,16 @@ void processArgument(const int& x) {
 
 void processArgument(int&& x) {
     std::cout << "Processing rvalue reference: " << x << std::endl;
+}
+
+// Perfect forwarding with decltype
+template<typename T>
+void perfectForward(T&& arg) {
+    using ArgType = decltype(arg);
+    std::cout << "Perfect forwarding: " << getTypeName<ArgType>() << std::endl;
+
+    // Forward to another function
+    processArgument(std::forward<T>(arg));
 }
 
 void demonstrateDecltypeInTemplates() {
@@ -440,7 +440,8 @@ void demonstratePracticalExamples() {
     std::map<std::string, int> word_counts = {{"hello", 5}, {"world", 5}, {"cpp", 3}};
 
     // Extract key and value types using decltype
-    using KeyType = decltype(word_counts.begin()->first);
+    // using KeyType = decltype(word_counts.begin()->first);  // error: no match for ‘operator=’ (operand types are ‘KeyType’ {aka ‘const std::__cxx11::basic_string<char>’} and ‘const std::__cxx11::basic_string<char>’)
+    using KeyType = std::remove_const_t<std::remove_reference_t<decltype(word_counts.begin()->first)>>;  // Result: std::string (plain value type)
     using ValueType = decltype(word_counts.begin()->second);
 
     std::cout << "Map key type: " << getTypeName<KeyType>() << std::endl;
