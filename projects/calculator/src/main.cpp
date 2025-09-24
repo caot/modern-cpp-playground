@@ -1,3 +1,4 @@
+#include "stack_trace.cpp"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -7,10 +8,12 @@
 #include <memory>
 #include <map>
 
+// --- Remaining Calculator Code (Unchanged from before) ---
+
 // RAII: Base class for expression tree nodes.
 class Node {
 public:
-    virtual double evaluate() const = 0;
+    [[nodiscard]] virtual double evaluate() const = 0;
     virtual ~Node() = default;
 };
 
@@ -19,7 +22,7 @@ class NumberNode : public Node {
 public:
     // `auto` used here for parameter type deduction (a more common use is with iterators).
     explicit NumberNode(auto val) : value(val) {}
-    double evaluate() const override { return value; }
+    [[nodiscard]] double evaluate() const override { return value; }
 private:
     double value;
 };
@@ -31,7 +34,7 @@ public:
     OperationNode(char op, std::unique_ptr<Node> left, std::unique_ptr<Node> right)
         : op_char(op), left_child(std::move(left)), right_child(std::move(right)) {}
 
-    double evaluate() const override {
+    [[nodiscard]] double evaluate() const override {
         // `auto` used to automatically deduce the type of the evaluated children.
         auto left_val = left_child->evaluate();
         auto right_val = right_child->evaluate();
@@ -120,7 +123,7 @@ std::unique_ptr<Node> parse_expression(const std::string& expression) {
                 values.push(std::make_unique<OperationNode>(op, std::move(left), std::move(right)));
             }
             if (!ops.empty()) {
-                ops.pop(); // Pop '('
+                ops.pop();
             }
         } else if (is_operator(c)) {
             while (!ops.empty() && ops.top() != '(' && get_precedence(ops.top()) >= get_precedence(c)) {
@@ -168,8 +171,8 @@ int main() {
             std::cout << "Result: " << result << std::endl;
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
+            print_stack_trace(); // Call the stack trace function on error.
         }
     }
-
     return 0;
 }
