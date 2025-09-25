@@ -104,7 +104,7 @@ std::unique_ptr<Node> parse_expression(const std::string& expression) {
             continue;
         } else if (isdigit(c)) {
             std::string num_str;
-            while (i < expression.length() && (isdigit(expression[i] || expression[i] == '.'))) {
+            while (i < expression.length() && (isdigit(expression[i]) || expression[i] == '.')) {
                 num_str += expression[i];
                 i++;
             }
