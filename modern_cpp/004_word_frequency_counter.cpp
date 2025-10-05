@@ -34,7 +34,8 @@ std::string clean_word(const std::string& word) {
  */
 std::map<std::string, int> count_word_frequency(const std::string& text) {
     std::map<std::string, int> frequency_map;
-    std::stringstream ss(text);
+    // Changed to std::istringstream (Input String Stream) as we are only reading from the text.
+    std::istringstream ss(text);
     std::string word_token;
 
     // Use stringstream to easily split the text into tokens (words)
