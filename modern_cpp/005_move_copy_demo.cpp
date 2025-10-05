@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <utility> // For std::move
+#include <chrono> // NEW: For timing
+#include <algorithm> // For std::copy
 
 /**
  * @brief A simple class demonstrating Copy and Move semantics.
@@ -72,40 +74,51 @@ void process_resource(T obj, const std::string& type) {
 }
 
 int main() {
-    std::cout << "=== Demo: Move vs. Copy Semantics ===\n" << std::endl;
+    std::cout << "=== Demo: Move vs. Copy Semantics & Timing ===\n" << std::endl;
 
-    // --- 1. LVALUE CALL (FORCES COPY) ---
-    // 'local_holder' is a named variable (Lvalue).
-    // When passed to process_resource, the copy constructor is called.
+    // Define a large size to make the copy operation measurably slow
+    const size_t LARGE_RESOURCE_SIZE = 100000000;
+
+    // --- 1. LVALUE CALL (FORCES COPY - EXPENSIVE) ---
     std::cout << "--- 1. LVALUE TEST (FORCES COPY) ---" << std::endl;
-    ResourceHolder local_holder(1000); // Initial Construction
+    ResourceHolder local_holder(LARGE_RESOURCE_SIZE); // Initial Construction
     local_holder.print_status("local_holder");
 
-    // Call the template function with the Lvalue
-    process_resource(local_holder, "Lvalue Call");
+    // START COPY TIMING
+    auto start_copy = std::chrono::high_resolution_clock::now();
+
+    // Call the template function with the Lvalue (triggers COPY CONSTRUCTOR)
+    process_resource(local_holder, "Lvalue Copy Call");
+
+    // STOP COPY TIMING
+    auto end_copy = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> copy_duration = end_copy - start_copy;
+
+    std::cout << "\n[COPY TIMING] Duration: " << copy_duration.count() << " ms" << std::endl;
 
     // Check original object after copy
-    std::cout << "\nAfter Lvalue Call (Original is safe):" << std::endl;
+    std::cout << "After Lvalue Call (Original is safe):" << std::endl;
     local_holder.print_status("local_holder");
 
-    // --- 2. RVALUE CALL (ALLOWS MOVE) ---
-    // A temporary object (Rvalue) is created and passed directly.
-    // When passed to process_resource, the move constructor is called.
-    std::cout << "\n\n--- 2. RVALUE TEST (ALLOWS MOVE) ---" << std::endl;
-
-    // The expression creates a temporary Rvalue, triggering construction + move
-    process_resource(ResourceHolder(50), "Rvalue Call");
-
-    // An alternative Rvalue call using std::move to convert an Lvalue to Rvalue
-    std::cout << "\n--- 3. STD::MOVE TEST (FORCES MOVE) ---" << std::endl;
-    ResourceHolder original_movable(200);
+    // --- 2. RVALUE CALL (FORCES MOVE - CHEAP) ---
+    std::cout << "\n\n--- 2. STD::MOVE TEST (FORCES MOVE) ---" << std::endl;
+    ResourceHolder original_movable(LARGE_RESOURCE_SIZE);
     original_movable.print_status("original_movable");
 
-    // Call the template function with Rvalue reference created by std::move
+    // START MOVE TIMING
+    auto start_move = std::chrono::high_resolution_clock::now();
+
+    // Call the template function with Rvalue reference created by std::move (triggers MOVE CONSTRUCTOR)
     process_resource(std::move(original_movable), "std::move Call");
 
+    // STOP MOVE TIMING
+    auto end_move = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> move_duration = end_move - start_move;
+
+    std::cout << "\n[MOVE TIMING] Duration: " << move_duration.count() << " ms" << std::endl;
+
     // Check original object after move - it should be empty/null
-    std::cout << "\nAfter std::move Call (Original is stolen):" << std::endl;
+    std::cout << "After std::move Call (Original is stolen):" << std::endl;
     original_movable.print_status("original_movable");
 
     std::cout << "\n=== Program End (Remaining objects destructed) ===" << std::endl;
